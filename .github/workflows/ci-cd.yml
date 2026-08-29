@@ -1,0 +1,146 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: team_4hXQPmAod6Z6Ci0eaZ4T2RBm
+  VERCEL_PROJECT_ID: prj_LOAkZKzRdAsUOdAjIRTz6EJ0Wh3R
+  VERCEL_CLI_VERSION: 59.3.0
+
+jobs:
+  quality:
+    name: Lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build Next.js
+        shell: bash
+        run: |
+          set -a
+          source supabase.env
+          set +a
+          npm run build:next
+
+  preview:
+    name: Deploy preview
+    needs: quality
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    environment:
+      name: Preview
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global "vercel@${VERCEL_CLI_VERSION}"
+
+      - name: Verify deployment credential
+        shell: bash
+        run: |
+          if [ -z "${VERCEL_TOKEN}" ]; then
+            echo "VERCEL_TOKEN is not configured in GitHub Actions secrets."
+            exit 1
+          fi
+
+      - name: Pull preview configuration
+        run: vercel pull --yes --environment=preview --token="${VERCEL_TOKEN}"
+
+      - name: Build preview
+        run: vercel build --token="${VERCEL_TOKEN}"
+
+      - name: Deploy preview
+        id: deploy
+        shell: bash
+        run: |
+          url="$(vercel deploy --prebuilt --token="${VERCEL_TOKEN}")"
+          echo "url=${url}" >> "${GITHUB_OUTPUT}"
+          echo "### Preview deployment" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+
+  production:
+    name: Deploy production
+    needs: quality
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global "vercel@${VERCEL_CLI_VERSION}"
+
+      - name: Verify deployment credential
+        shell: bash
+        run: |
+          if [ -z "${VERCEL_TOKEN}" ]; then
+            echo "VERCEL_TOKEN is not configured in GitHub Actions secrets."
+            exit 1
+          fi
+
+      - name: Pull production configuration
+        run: vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
+
+      - name: Build production
+        run: vercel build --prod --token="${VERCEL_TOKEN}"
+
+      - name: Deploy production
+        id: deploy
+        shell: bash
+        run: |
+          url="$(vercel deploy --prebuilt --prod --token="${VERCEL_TOKEN}")"
+          echo "url=${url}" >> "${GITHUB_OUTPUT}"
+          echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
