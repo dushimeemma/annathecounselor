@@ -1,0 +1,38 @@
+diff --git a/package-lock.json b/package-lock.json
+index 5deecab..ec7bf85 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -54,7 +54,7 @@
+         "wrangler": "4.92.0"
+       },
+       "engines": {
+-        "node": ">=22.13.0"
++        "node": "22.x"
+       }
+     },
+     "node_modules/@alloc/quick-lru": {
+diff --git a/package.json b/package.json
+index f73ca60..a1e0544 100644
+--- a/package.json
++++ b/package.json
+@@ -3,7 +3,7 @@
+   "version": "0.1.0",
+   "private": true,
+   "engines": {
+-    "node": ">=22.13.0"
++    "node": "22.x"
+   },
+   "scripts": {
+     "install:ci": "bash scripts/install-ci.sh",
+diff --git a/vercel.json b/vercel.json
+index 8705660..ce93d07 100644
+--- a/vercel.json
++++ b/vercel.json
+@@ -1,5 +1,6 @@
+ {
+   "$schema": "https://openapi.vercel.sh/vercel.json",
++  "buildCommand": "npm run build:next",
+   "git": {
+     "deploymentEnabled": false
+   }
+
