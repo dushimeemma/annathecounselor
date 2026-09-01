@@ -1,0 +1,67 @@
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+index dbe66a4..0104573 100644
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -101,6 +101,8 @@ jobs:
+     needs: quality
+     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+     runs-on: ubuntu-latest
++    outputs:
++      deployment_url: ${{ steps.deploy.outputs.url }}
+     environment:
+       name: Production
+       url: ${{ steps.deploy.outputs.url }}
+@@ -144,3 +146,52 @@ jobs:
+           echo "url=${url}" >> "${GITHUB_OUTPUT}"
+           echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
+           echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
++
++  release:
++    name: Publish GitHub release
++    needs: production
++    if: needs.production.result == 'success'
++    runs-on: ubuntu-latest
++    permissions:
++      contents: write
++    steps:
++      - name: Create release for production deployment
++        uses: actions/github-script@v7
++        env:
++          DEPLOYMENT_URL: ${{ needs.production.outputs.deployment_url }}
++          RELEASE_NAME: Production deployment ${{ github.run_number }}.${{ github.run_attempt }}
++          RELEASE_TAG: production-${{ github.run_number }}.${{ github.run_attempt }}
++        with:
++          github-token: ${{ secrets.GITHUB_TOKEN }}
++          script: |
++            const owner = context.repo.owner;
++            const repo = context.repo.repo;
++            const deploymentUrl = process.env.DEPLOYMENT_URL;
++            const releaseName = process.env.RELEASE_NAME;
++            const tag = process.env.RELEASE_TAG;
++            const workflowUrl = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
++
++            const body = [
++              'Production deployment completed successfully.',
++              '',
++              `- Deployment: ${deploymentUrl}`,
++              `- Commit: ${context.sha}`,
++              `- Workflow run: ${workflowUrl}`,
++            ].join('\n');
++
++            const release = await github.rest.repos.createRelease({
++              owner,
++              repo,
++              tag_name: tag,
++              target_commitish: context.sha,
++              name: releaseName,
++              body,
++              draft: false,
++              prerelease: false,
++              generate_release_notes: true,
++            });
++
++            await core.summary
++              .addHeading('GitHub release')
++              .addLink(release.data.name, release.data.html_url)
++              .write();
+
