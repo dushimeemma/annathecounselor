@@ -101,7 +101,7 @@ button, input, textarea { font: inherit; }
 .anna-nav a { position: relative; color: #5f6669; font-size: 9px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
 .anna-nav a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: -6px; height: 1px; background: var(--anna-teal); transition: right 180ms ease; }
 .anna-nav a:hover::after { right: 0; }
-.anna-mobile-social { justify-self: end; display: none; color: var(--anna-navy); }
+.anna-mobile-social { justify-self: end; display: none; padding: 0; border: 0; background: transparent; color: var(--anna-navy); cursor: pointer; }
 .anna-mobile-social svg { width: 19px; height: 19px; }
 
 .anna-hero { position: relative; min-height: 510px; display: grid; align-items: center; isolation: isolate; overflow: hidden; background: #717778; }
@@ -124,6 +124,7 @@ button, input, textarea { font: inherit; }
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  cursor: pointer;
   transition: transform 180ms ease, background 180ms ease;
 }
 .anna-turquoise-button:hover { transform: translateY(-2px); background: #6bd4d7; }
@@ -209,7 +210,36 @@ button, input, textarea { font: inherit; }
 .anna-footer-brand strong { margin-top: 6px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
 .anna-footer-social { justify-self: end; display: grid; justify-items: start; gap: 14px; }
 .anna-outline-button { min-width: 168px; padding: 11px 17px; border: 1px solid var(--anna-teal); color: var(--anna-teal); font-size: 8px; font-weight: 800; letter-spacing: 0.15em; text-align: center; text-transform: uppercase; }
+.anna-footer-social .anna-outline-button { background: transparent; cursor: pointer; }
 .anna-footer > p { grid-column: 1 / -1; margin: 34px 0 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.55); font-size: 8px; letter-spacing: 0.06em; text-align: center; }
+
+.anna-booking-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(1, 19, 36, 0.78);
+  backdrop-filter: blur(5px);
+}
+.anna-booking-dialog {
+  width: min(980px, 100%);
+  height: min(820px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid rgba(82, 200, 204, 0.75);
+  background: white;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.38);
+}
+.anna-booking-header { min-height: 82px; padding: 16px 20px 16px 26px; display: flex; align-items: center; justify-content: space-between; gap: 24px; background: var(--anna-navy); color: white; }
+.anna-booking-header p { margin: 0 0 4px; color: var(--anna-teal); font-size: 8px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+.anna-booking-header h2 { margin: 0; font-size: 25px; letter-spacing: 0.03em; }
+.anna-booking-close { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid rgba(82, 200, 204, 0.65); background: transparent; color: white; cursor: pointer; }
+.anna-booking-close:hover { background: rgba(82, 200, 204, 0.14); }
+.anna-booking-close svg { width: 20px; height: 20px; }
+.anna-booking-frame { width: 100%; height: 100%; border: 0; background: white; }
 
 .journal-page { min-height: 100vh; background: var(--anna-cream); color: var(--anna-charcoal); }
 .journal-page-header { padding: 22px max(6vw, 24px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--anna-line); background: white; }
@@ -261,6 +291,9 @@ button, input, textarea { font: inherit; }
   .anna-footer nav { justify-items: center; }
   .anna-footer-social { justify-self: center; justify-items: center; }
   .anna-footer-brand { grid-row: 1; }
+  .anna-booking-overlay { padding: 0; }
+  .anna-booking-dialog { width: 100%; height: 100dvh; border: 0; }
+  .anna-booking-header { min-height: 72px; padding: 13px 15px 13px 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,14 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, AtSign, Check, Play } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowRight, CalendarDays, Check, Play } from "lucide-react";
 
+import { CalendlyBooking } from "@/components/calendly-booking";
 import { getSupabaseClient, supabaseConfigured } from "@/lib/supabase";
 import {
   DEFAULT_ARTICLES,
   DEFAULT_SITE_CONTENT,
   mapArticle,
+  mergeSiteContent,
   type Article,
   type SiteContent,
 } from "@/lib/site-content";
@@ -28,6 +30,7 @@ function BrandMark({ label, compact = false }: { label: string; compact?: boolea
 export default function Home() {
   const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
   const [articles, setArticles] = useState<Article[]>(DEFAULT_ARTICLES);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -41,7 +44,7 @@ export default function Home() {
         .eq("id", "main")
         .maybeSingle();
       if (active && data?.content) {
-        setContent({ ...DEFAULT_SITE_CONTENT, ...(data.content as Partial<SiteContent>) });
+        setContent(mergeSiteContent(data.content as Partial<SiteContent>));
       }
     }
 
@@ -72,6 +75,8 @@ export default function Home() {
   const featuredArticles = useMemo(() => articles.slice(0, 3), [articles]);
   const services = content.services.slice(0, 3);
   const heroImage = content.heroImageUrl?.trim() || DEFAULT_SITE_CONTENT.heroImageUrl;
+  const openBooking = useCallback(() => setBookingOpen(true), []);
+  const closeBooking = useCallback(() => setBookingOpen(false), []);
 
   return (
     <main className="anna-site anna-reference-layout">
@@ -88,9 +93,9 @@ export default function Home() {
           <a href="#journal">Blog</a>
           <a href="#contact">Contact</a>
         </nav>
-        <a className="anna-mobile-social" href={content.instagramUrl} target="_blank" rel="noreferrer" aria-label="Anna on Instagram">
-          <AtSign aria-hidden="true" />
-        </a>
+        <button type="button" className="anna-mobile-social" onClick={openBooking} aria-label="Book a session">
+          <CalendarDays aria-hidden="true" />
+        </button>
       </header>
 
       <section className="anna-hero" id="top">
@@ -99,9 +104,9 @@ export default function Home() {
         <div className="anna-hero-content">
           <p>{content.eyebrow}</p>
           <h1>{content.headline}<br />{content.headlineAccent}</h1>
-          <a className="anna-turquoise-button" href={content.instagramUrl} target="_blank" rel="noreferrer">
+          <button type="button" className="anna-turquoise-button" onClick={openBooking}>
             {content.ctaLabel}
-          </a>
+          </button>
         </div>
       </section>
 
@@ -166,7 +171,7 @@ export default function Home() {
               <li key={service.id || service.title}><Check aria-hidden="true" /><span><strong>{service.title}</strong>{service.description}</span></li>
             ))}
           </ul>
-          <a className="anna-turquoise-button" href={content.instagramUrl} target="_blank" rel="noreferrer">{content.ctaLabel}</a>
+          <button type="button" className="anna-turquoise-button" onClick={openBooking}>{content.ctaLabel}</button>
         </div>
         <div className="anna-program-visual">
           <div className="anna-program-main-image"><Image src={heroImage} alt={content.heroImageAlt} fill unoptimized sizes="420px" /></div>
@@ -192,10 +197,10 @@ export default function Home() {
       </section>
 
       <section className="anna-final-cta" id="contact">
-        <p>{content.instagramHandle}</p>
+        <p>Schedule your consultation</p>
         <h2>{content.ctaTitle}</h2>
         <div>{content.ctaBody}</div>
-        <a className="anna-turquoise-button" href={content.instagramUrl} target="_blank" rel="noreferrer">{content.ctaLabel}</a>
+        <button type="button" className="anna-turquoise-button" onClick={openBooking}>{content.ctaLabel}</button>
       </section>
 
       <footer className="anna-footer">
@@ -213,10 +218,11 @@ export default function Home() {
         </div>
         <div className="anna-footer-social">
           <a href={content.instagramUrl} target="_blank" rel="noreferrer">Instagram</a>
-          <a className="anna-outline-button" href={content.instagramUrl} target="_blank" rel="noreferrer">Connect with Anna</a>
+          <button type="button" className="anna-outline-button" onClick={openBooking}>Book a session</button>
         </div>
         <p>© {new Date().getFullYear()} {content.brandName}. All rights reserved.</p>
       </footer>
+      <CalendlyBooking open={bookingOpen} url={content.calendlyUrl} onClose={closeBooking} />
     </main>
   );
 }

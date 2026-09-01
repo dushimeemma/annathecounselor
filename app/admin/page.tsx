@@ -39,6 +39,7 @@ import {
   createBlankArticle,
   DEFAULT_SITE_CONTENT,
   mapArticle,
+  mergeSiteContent,
   type Article,
   type SiteContent,
 } from "@/lib/site-content";
@@ -51,6 +52,15 @@ function slugify(value: string) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function isCalendlyBookingUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" && (url.hostname === "calendly.com" || url.hostname.endsWith(".calendly.com"));
+  } catch {
+    return false;
+  }
 }
 
 export default function AdminPage() {
@@ -108,7 +118,7 @@ export default function AdminPage() {
       setCurrentUser(user);
       setStatus("authorized");
       if (contentRecord?.content) {
-        setContent({ ...DEFAULT_SITE_CONTENT, ...(contentRecord.content as Partial<SiteContent>) });
+        setContent(mergeSiteContent(contentRecord.content as Partial<SiteContent>));
       }
       if (postRecords) {
         setArticles(postRecords.map((post) => mapArticle(post)));
@@ -153,6 +163,11 @@ export default function AdminPage() {
   }
 
   async function saveSiteContent() {
+    if (!isCalendlyBookingUrl(content.calendlyUrl)) {
+      toast.error("Enter a valid https://calendly.com booking URL before saving.");
+      return;
+    }
+
     setSaving(true);
     try {
       if (!currentUser) throw new Error("Administrator session required.");
@@ -407,6 +422,11 @@ export default function AdminPage() {
                 <div className="admin-grid-two">
                   <div className="admin-field"><Label htmlFor="instagram-handle">Instagram handle</Label><Input id="instagram-handle" value={content.instagramHandle} onChange={(event) => updateContent("instagramHandle", event.target.value)} /></div>
                   <div className="admin-field"><Label htmlFor="instagram-url">Instagram URL</Label><Input id="instagram-url" type="url" value={content.instagramUrl} onChange={(event) => updateContent("instagramUrl", event.target.value)} /></div>
+                </div>
+                <div className="admin-field">
+                  <Label htmlFor="calendly-url">Calendly booking URL</Label>
+                  <Input id="calendly-url" type="url" placeholder="https://calendly.com/username/event" value={content.calendlyUrl} onChange={(event) => updateContent("calendlyUrl", event.target.value)} />
+                  <p className="admin-field-help">All “Book a session” buttons use this link. Changes take effect after saving; no deployment is needed.</p>
                 </div>
                 <div className="admin-grid-three">
                   <div className="admin-field"><Label htmlFor="cta-label">Button label</Label><Input id="cta-label" value={content.ctaLabel} onChange={(event) => updateContent("ctaLabel", event.target.value)} /></div>

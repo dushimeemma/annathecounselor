@@ -20,6 +20,7 @@ export type SiteContent = {
   heroImageAlt: string;
   instagramHandle: string;
   instagramUrl: string;
+  calendlyUrl: string;
   ctaLabel: string;
   ctaTitle: string;
   ctaBody: string;
@@ -57,10 +58,11 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   heroImageAlt: "A calm counseling room with two chairs in warm morning light",
   instagramHandle: "@annathecounselor",
   instagramUrl: "https://www.instagram.com/annathecounselor/",
-  ctaLabel: "Connect on Instagram",
+  calendlyUrl: "https://calendly.com/dushimeemma",
+  ctaLabel: "Book a session",
   ctaTitle: "Ready to begin a conversation?",
   ctaBody:
-    "Reach out through Anna’s official Instagram profile for current availability and more information.",
+    "Choose a convenient time for a private session using the secure booking calendar.",
   services: [
     {
       id: "individual-support",
@@ -111,6 +113,23 @@ export const DEFAULT_ARTICLES: Article[] = [
     publishedAt: "2026-08-12T09:00:00.000Z",
   },
 ];
+
+export function mergeSiteContent(data?: Partial<SiteContent> | null): SiteContent {
+  const merged = { ...DEFAULT_SITE_CONTENT, ...data };
+
+  // Existing CMS records predate Calendly. Upgrade only the former default
+  // Instagram call-to-action copy while preserving any custom wording.
+  if (!data?.calendlyUrl?.trim()) {
+    if (merged.ctaLabel.trim().toLowerCase() === "connect on instagram") {
+      merged.ctaLabel = DEFAULT_SITE_CONTENT.ctaLabel;
+    }
+    if (merged.ctaBody.toLowerCase().includes("instagram")) {
+      merged.ctaBody = DEFAULT_SITE_CONTENT.ctaBody;
+    }
+  }
+
+  return merged;
+}
 
 export function mapArticle(data: Record<string, unknown>): Article {
   const slug = String(data.slug ?? "");
